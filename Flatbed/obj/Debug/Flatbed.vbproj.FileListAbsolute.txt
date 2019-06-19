@@ -10,3 +10,4 @@ D:\Projects\Mods\Flatbed\Flatbed\obj\Debug\Flatbed.vbproj.GenerateResource.Cache
 D:\Projects\Mods\Flatbed\Flatbed\obj\Debug\Flatbed.dll
 D:\Projects\Mods\Flatbed\Flatbed\obj\Debug\Flatbed.xml
 D:\Projects\Mods\Flatbed\Flatbed\obj\Debug\Flatbed.pdb
+D:\Projects\Mods\Flatbed\Flatbed\obj\Debug\Flatbed.vbprojResolveAssemblyReference.cache

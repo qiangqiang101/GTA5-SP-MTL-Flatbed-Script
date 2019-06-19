@@ -12,23 +12,26 @@ Module Helper
     'Config
     Public config As ScriptSettings = ScriptSettings.Load("scripts\Flatbed.ini")
     Public fbModel As String = "flatbed3"
-    Public propModel As String = "inm_flatbed_base"
     Public marker As Boolean = True
-    Public hookKey As Control = Control.VehicleSubAscend
+    Public hookKey As Control = Control.VehicleSubDescend
+    Public fbModels As New List(Of Model)
 
     'Decor
     Public modDecor As String = "inm_flatbed_installed"
     Public towVehDecor As String = "inm_flatbed_vehicle"
-    Public propDecor As String = "inm_flatbed_prop"
-    Public bedRotXDecor As String = "inm_flatbed_rotX"
-    Public bedPosYDecor As String = "inm_flatbed_posY"
-    Public bedPosZDecor As String = "inm_flatbed_posZ"
     Public lastFbVehDecor As String = "inm_flatbed_last"
     Public helpDecor As String = "inm_flatbed_help"
     Public persistencePauseDecor As String = "inm_persistence_pause"
 
-    Public slotP As Vector3 = Vector3.Zero, slotR As Vector3 = Vector3.Zero
+    Public slotP As Vector3 = Vector3.Zero
     Public gHeight As Single = 0F
+
+    Public PP As Ped
+    Public LV As Vehicle, LF As Vehicle
+    Public NV As Vehicle
+    Public AC As New List(Of VehicleClass) From {VehicleClass.Commercial, VehicleClass.Compacts, VehicleClass.Coupes, VehicleClass.Cycles, VehicleClass.Emergency, VehicleClass.Industrial,
+        VehicleClass.Military, VehicleClass.Motorcycles, VehicleClass.Muscle, VehicleClass.OffRoad, VehicleClass.Sedans, VehicleClass.Service, VehicleClass.Sports, VehicleClass.SportsClassics,
+        VehicleClass.Super, VehicleClass.SUVs, VehicleClass.Utility, VehicleClass.Vans}
 
     <Extension>
     Public Sub SaveVehicleCoords(veh As Vehicle, gh As Single)
@@ -51,15 +54,18 @@ Module Helper
     End Function
 
     <Extension>
-    Public Function IsAnyPedNearBed(prop As Prop, radius As Single) As Boolean
-        Dim pos As Vector3 = prop.Position
-        Return Native.Function.Call(Of Boolean)(Hash.IS_ANY_PED_NEAR_POINT, pos.X, pos.Y, pos.Z, radius)
+    Public Function IsAnyPedInVehicleNearBed(veh As Vehicle, radius As Single) As Boolean
+        Dim pos As Vector3 = veh.GetBoneCoord("misc_a")
+        If Native.Function.Call(Of Boolean)(Hash.IS_ANY_PED_NEAR_POINT, pos.X, pos.Y, pos.Z, radius) Then
+            If Game.Player.Character.IsInVehicle Then Return True Else Return False
+        End If
+        Return False
     End Function
 
     <Extension>
-    Public Function IsAnyVehicleNearBed(prop As Prop, radius As Single) As Boolean
-        Dim pos As Vector3 = prop.Position
-        Return Native.Function.Call(Of Boolean)(Hash.IS_ANY_VEHICLE_NEAR_POINT, pos.X, pos.Y, pos.Z, radius)
+    Public Function IsAnyPedNearBed(veh As Vehicle, radius As Single) As Boolean
+        Dim pos As Vector3 = veh.GetBoneCoord("misc_a")
+        Return Native.Function.Call(Of Boolean)(Hash.IS_ANY_PED_NEAR_POINT, pos.X, pos.Y, pos.Z, radius)
     End Function
 
     <Extension>
@@ -69,14 +75,15 @@ Module Helper
 
     <Extension>
     Public Function IsThisFlatbed3(veh As Vehicle) As Boolean
-        Return veh.Model = fbModel
+        'Return veh.Model = fbModel
+        Return fbModels.Contains(veh.Model)
     End Function
 
     Public Sub UpdateSlotZCoords(PlusMinus As ePlusMinus, Value As Single)
         If PlusMinus = ePlusMinus.Plus Then
-            slotP = New Vector3(0.0, 0.8, 0.07 + Value)
+            slotP = New Vector3(0.0, 0.8, 0.1 + Value)
         Else
-            slotP = New Vector3(0.0, 0.8, 0.07 - Value)
+            slotP = New Vector3(0.0, 0.8, 0.1 - Value)
         End If
     End Sub
 
@@ -91,19 +98,8 @@ Module Helper
     End Function
 
     <Extension>
-    Public Function CurrentBedProp(veh As Vehicle) As Prop
-        Return New Prop(veh.GetInt(propDecor))
-        'Return Native.Function.Call(Of Prop)(Hash.GET_ENTITY_ATTACHED_TO, veh)
-    End Function
-
-    <Extension>
     Public Sub CurrentTowingVehicle(flatbed As Vehicle, veh As Vehicle)
         If veh = Nothing Then flatbed.SetInt(towVehDecor, 0) Else flatbed.SetInt(towVehDecor, veh.Handle)
-    End Sub
-
-    <Extension>
-    Public Sub CurrentBedProp(flatbed As Vehicle, prop As Prop)
-        flatbed.SetInt(propDecor, prop.Handle)
     End Sub
 
     <Extension>
@@ -112,29 +108,12 @@ Module Helper
     End Function
 
     <Extension>
-    Public Sub AttachBed(veh As Vehicle)
-        Try
-            Script.Wait(5000)
-            veh.SetFloat(bedRotXDecor, 0F)
-            veh.SetFloat(bedPosYDecor, 0F)
-            veh.SetFloat(bedPosZDecor, 0F)
-            If Not veh.CurrentBedProp.Handle = 0 Then veh.CurrentBedProp.Delete()
-            Dim prop As Prop = World.CreateProp(propModel, veh.GetBoneCoord("misc_a"), True, False)
-            prop.AttachToFix(veh, veh.GetBoneIndex("misc_a"), Vector3.Zero, Vector3.Zero)
-            veh.CurrentBedProp(prop)
-            veh.ToggleExtra(1, False)
-        Catch ex As Exception
-            Logger.Log($"{ex.Message}{ex.HResult}{ex.StackTrace}")
-        End Try
-    End Sub
-
-    <Extension>
     Public Function IsFlatbedDropped(veh As Vehicle) As Boolean
         Dim result As Boolean = False
-        Select Case World.GetDistance(veh.Position, veh.CurrentBedProp.Position)
-            Case 3.0F To 4.0F
+        Select Case veh.GetBoneCoord("engine").DistanceTo(veh.GetBoneCoord("misc_a"))
+            Case 7.0F To 7.5F
                 result = False
-            Case 7.0F To 9.0F
+            Case 11.5F To 13.0F
                 result = True
         End Select
         Return result
@@ -142,88 +121,19 @@ Module Helper
 
     <Extension>
     Public Function AttachPosition(veh As Vehicle) As Vector3
-        Return veh.CurrentBedProp.Position - (veh.CurrentBedProp.ForwardVector * 6)
+        Return veh.GetBoneCoord("misc_a") - (veh.ForwardVector * 7)
+    End Function
+
+    <Extension>
+    Public Function DetachPosition(veh As Vehicle) As Vector3
+        Return veh.GetBoneCoord("misc_a") - (veh.ForwardVector * 10)
     End Function
 
     <Extension>
     Public Sub DrawMarkerTick(veh As Vehicle)
-        If veh.IsFlatbedDropped AndAlso veh.CurrentTowingVehicle.Handle = 0 AndAlso Game.Player.Character.LastVehicle = veh Then
-            World.DrawMarker(MarkerType.VerticalCylinder, veh.AttachPosition, Vector3.Zero, Vector3.Zero, New Vector3(2.0F, 2.0F, 3.0F), Color.GreenYellow)
-        End If
-    End Sub
-
-    <Extension>
-    Public Sub DropBed(veh As Vehicle)
-        If veh.IsAlive Then
-            Dim prop As Prop = veh.CurrentBedProp
-
-            If Not veh.EngineRunning Then veh.EngineRunning = True
-            veh.LeftIndicatorLightOn = True
-            veh.RightIndicatorLightOn = True
-            Dim soundId As Integer = Audio.PlaySoundFromEntity(veh, "Garage_Open", "CAR_STEAL_2_SOUNDSET")
-            Script.Wait(500)
-
-            Dim bedRotX As Single = veh.GetFloat(bedRotXDecor)
-            Dim bedPosY As Single = veh.GetFloat(bedPosYDecor)
-            Dim bedPosZ As Single = veh.GetFloat(bedPosZDecor)
-
-            Select Case World.GetDistance(veh.Position, prop.Position)
-                Case 3.0F To 4.0F
-                    If Not prop.Handle = 0 Then
-                        Do Until bedPosY <= -4.5F
-                            bedPosY -= 0.03F
-                            prop.AttachToFix(veh, veh.GetBoneIndex("misc_a"), New Vector3(0F, bedPosY, 0F), Vector3.Zero)
-                            Script.Wait(20)
-                        Loop
-                    End If
-                    bedPosY = -4.5F
-
-                    If Not prop.Handle = 0 Then
-                        Do Until prop.GroundHeight <= 0.5F
-                            bedRotX += 0.1F
-                            bedPosZ -= 0.03F
-                            prop.AttachToFix(veh, veh.GetBoneIndex("misc_a"), New Vector3(0F, bedPosY, bedPosZ), New Vector3(bedRotX * 4.3F, 0F, 0F))
-                            Script.Wait(20)
-                        Loop
-                    End If
-
-                    veh.SetFloat(bedRotXDecor, bedRotX)
-                    veh.SetFloat(bedPosYDecor, bedPosY)
-                    veh.SetFloat(bedPosZDecor, bedPosZ)
-                Case 7.0F To 9.0F
-                    If bedPosY = 0F Then
-                        bedPosY = -4.5F
-                        bedRotX = 3.0F
-                        bedPosZ = -0.9299996F
-                    End If
-
-                    If Not prop.Handle = 0 Then
-                        Do Until bedRotX <= 0.1F
-                            bedRotX -= 0.1F
-                            bedPosZ += 0.03F
-                            prop.AttachToFix(veh, veh.GetBoneIndex("misc_a"), New Vector3(0F, bedPosY, bedPosZ), New Vector3(bedRotX * 4.3F, 0F, 0F))
-                            Script.Wait(20)
-                        Loop
-                    End If
-                    bedRotX = 0F
-                    bedPosZ = 0F
-
-                    If Not prop.Handle = 0 Then
-                        Do Until bedPosY >= 0.1F
-                            bedPosY += 0.03F
-                            prop.AttachToFix(veh, veh.GetBoneIndex("misc_a"), New Vector3(0F, bedPosY, 0F), Vector3.Zero)
-                            Script.Wait(20)
-                        Loop
-                    End If
-                    bedPosY = 0F
-
-                    prop.AttachToFix(veh, veh.GetBoneIndex("misc_a"), Vector3.Zero, Vector3.Zero)
-
-                    veh.SetFloat(bedRotXDecor, bedRotX)
-                    veh.SetFloat(bedPosYDecor, bedPosY)
-                    veh.SetFloat(bedPosZDecor, bedPosZ)
-            End Select
-            Audio.StopSound(soundId)
+        If veh.IsFlatbedDropped AndAlso veh.CurrentTowingVehicle.Handle = 0 Then 'AndAlso Game.Player.Character.LastVehicle = veh Then
+            Dim pos As New Vector3(veh.AttachPosition.X, veh.AttachPosition.Y, veh.AttachPosition.Z - 1.0F)
+            World.DrawMarker(MarkerType.VerticalCylinder, pos, Vector3.Zero, Vector3.Zero, New Vector3(2.0F, 2.0F, 3.0F), Color.GreenYellow)
         End If
     End Sub
 
@@ -242,7 +152,13 @@ Module Helper
 
     <Extension>
     Public Sub AttachToFix(entity1 As Entity, entity2 As Entity, boneindex As Integer, position As Vector3, rotation As Vector3)
-        Native.Function.Call(Hash.ATTACH_ENTITY_TO_ENTITY, entity1.Handle, entity2.Handle, boneindex, position.X, position.Y, position.Z, rotation.X, rotation.Y, rotation.Z, False, True, True, False, 2, True)
+        Dim fixedRot As Boolean = True
+        Dim vertexIndex As Integer = 2
+        Dim isPed As Boolean = False
+        Dim col As Boolean = True
+        Dim useSoftPinning As Boolean = True
+        Native.Function.Call(Hash.ATTACH_ENTITY_TO_ENTITY, entity1.Handle, entity2.Handle, boneindex, position.X, position.Y, position.Z, rotation.X, rotation.Y, rotation.Z,
+                             False, useSoftPinning, col, isPed, vertexIndex, fixedRot)
     End Sub
 
     <Extension>
@@ -251,6 +167,21 @@ Module Helper
              boneindex1, boneindex2, position1.X, position1.Y, position1.Z, 0.0, 0.0, 0.0,
              rotation.X, rotation.Y, rotation.Z, 5000.0, True, False, True, True, 2)
         '                                       bForce   fRot   unk   col notelpot alwys 2
+    End Sub
+
+    <Extension>
+    Public Sub DetachToFix(carToDetach As Vehicle)
+        Dim slotP2 As Vector3 = New Vector3(slotP.X, slotP.Y, slotP.Z + 0.3F)
+        Dim attachedCar As Vehicle = carToDetach.GetEntityAttachedTo
+        Native.Function.Call(Hash.DETACH_ENTITY, carToDetach, True, True)
+        Script.Wait(10)
+        carToDetach.AttachToFix(attachedCar, LF.GetBoneIndex("misc_a"), slotP2, Vector3.Zero)
+        Script.Wait(10)
+        Native.Function.Call(Hash.DETACH_ENTITY, carToDetach, True, True)
+        Script.Wait(10)
+        carToDetach.AttachToPhysically(attachedCar, LF.GetBoneIndex("misc_a"), 0, slotP2, Vector3.Zero)
+        Script.Wait(10)
+        Native.Function.Call(Hash.DETACH_ENTITY, carToDetach, True, True)
     End Sub
 
     Public Sub DisplayHelpTextThisFrame(helpText As String, Optional Shape As Integer = -1)
@@ -270,11 +201,6 @@ Module Helper
     End Function
 
     <Extension>
-    Public Function GetDistanceBetweenFlatbedAndVehicleFront(Flatbed As Vehicle, Target As Vehicle) As Single
-        Return World.GetDistance(Flatbed.Position, Target.Position)
-    End Function
-
-    <Extension>
     Public Function LastFlatbed(ped As Ped) As Vehicle
         Return New Vehicle(ped.GetInt(lastFbVehDecor))
     End Function
@@ -282,32 +208,34 @@ Module Helper
     <Extension>
     Public Sub LastFlatbed(ped As Ped, veh As Vehicle)
         ped.SetInt(lastFbVehDecor, veh.Handle)
-        If veh.IsExtraOn(1) AndAlso veh.CurrentBedProp.Handle = 0 Then
-            veh.AttachBed()
-        End If
     End Sub
 
     <Extension>
-    Public Sub PushDeadVehicle(veh As Vehicle)
-        If veh.IsDead Then
-            Native.Function.Call(Hash.APPLY_FORCE_TO_ENTITY, veh, 3, 0.0, -9.0, 0.0, 0.0, 0.0, 0.0, 0, True, True, True, True, True)
-        End If
+    Public Sub PushVehicleBack(veh As Vehicle)
+        Native.Function.Call(Hash.APPLY_FORCE_TO_ENTITY, veh, 3, 0.0, -0.2F, 0.0, 0.0, 0.0, 0.0, 0, True, True, True, True, True)
+    End Sub
+
+    <Extension>
+    Public Sub PushVehicleForward(veh As Vehicle)
+        Native.Function.Call(Hash.APPLY_FORCE_TO_ENTITY, veh, 3, 0.0, 0.1F, 0.0, 0.0, 0.0, 0.0, 0, True, True, True, True, True)
     End Sub
 
     Public Sub LoadSettings()
         CreateConfig()
         marker = config.GetValue(Of Boolean)("SETTING", "MARKER", True)
-        fbModel = config.GetValue(Of String)("SETTING", "MODEL", "flatbed3")
-        propModel = config.GetValue(Of String)("SETTING", "PROP_MODEL", "inm_flatbed_base")
-        hookKey = config.GetValue(Of Control)("CONTROL", "HOOKKEY", Control.VehicleDuck)
+        fbModel = config.GetValue(Of String)("SETTING", "MODELS", "flatbed3")
+        hookKey = config.GetValue(Of Control)("CONTROL", "HOOKKEY", Control.VehicleSubDescend)
+        Dim fbms As String() = fbModel.Split(New Char() {","c})
+        For Each model In fbms
+            fbModels.Add(model)
+        Next
     End Sub
 
     Private Sub CreateConfig()
         If Not File.Exists("scripts\Flatbed.ini") Then
             config.SetValue(Of Boolean)("SETTING", "MARKER", True)
-            config.SetValue(Of String)("SETTING", "MODEL", "flatbed3")
-            config.SetValue(Of String)("SETTING", "PROP_MODEL", "inm_flatbed_base")
-            config.SetValue(Of Control)("CONTROL", "HOOKKEY", Control.VehicleDuck)
+            config.SetValue(Of String)("SETTING", "MODELS", "flatbed3")
+            config.SetValue(Of Control)("CONTROL", "HOOKKEY", Control.VehicleSubDescend)
             config.Save()
         End If
     End Sub
@@ -684,6 +612,83 @@ Module Helper
         If make = "NULL" Then full = name
         Return full
     End Function
+
+    <Extension>
+    Public Sub StartWinding(rope As Rope)
+        Native.Function.Call(Hash.START_ROPE_WINDING, rope.Handle)
+    End Sub
+
+    <Extension>
+    Public Sub StopWinding(rope As Rope)
+        Native.Function.Call(Hash.STOP_ROPE_WINDING, rope.Handle)
+    End Sub
+
+    <Extension>
+    Public Function GetRopeHook(veh As Vehicle) As Vector3
+        If veh.HasBone("neon_f") Then
+            Return veh.GetBoneCoord("neon_f")
+        Else
+            If veh.HasBone("bumper_f") Then
+                Return veh.GetBoneCoord("bumper_f")
+            Else
+                If veh.HasBone("engine") Then
+                    Return veh.GetBoneCoord("engine")
+                Else
+                    Return veh.Position + veh.ForwardVector
+                End If
+            End If
+        End If
+    End Function
+
+    <Extension>
+    Public Function GetRopeHookRear(veh As Vehicle) As Vector3
+        If veh.HasBone("neon_b") Then
+            Return veh.GetBoneCoord("neon_b")
+        Else
+            If veh.HasBone("bumper_r") Then
+                Return veh.GetBoneCoord("bumper_r")
+            Else
+                If veh.HasBone("trunk") Then
+                    Return veh.GetBoneCoord("trunk")
+                Else
+                    Return veh.Position + veh.ForwardVector
+                End If
+            End If
+        End If
+    End Function
+
+    <Extension>
+    Public Sub DropBed(veh As Vehicle)
+        If veh.IsAlive Then
+            If Not veh.EngineRunning Then veh.EngineRunning = True
+            veh.LeftIndicatorLightOn = True
+            veh.RightIndicatorLightOn = True
+            Dim soundId As Integer = Audio.PlaySoundFromEntity(veh, "Garage_Open", "CAR_STEAL_2_SOUNDSET")
+            Script.Wait(500)
+            Dim closeFloat As Single = 0.03F
+            Dim openFloat As Single = 0.26F
+
+            Select Case veh.GetBoneCoord("engine").DistanceTo(veh.GetBoneCoord("misc_a"))
+                Case 6.0F To 9.0F
+                    Dim initPos As Single = closeFloat
+                    Do Until initPos >= openFloat
+                        initPos += 0.0006F
+                        Native.Function.Call(Hash._0xF8EBCCC96ADB9FB7, veh, initPos, False)
+                        Script.Wait(1)
+                    Loop
+                    Native.Function.Call(Hash._0xF8EBCCC96ADB9FB7, veh, openFloat, False)
+                Case 9.1F To 13.0F
+                    Dim initPos As Single = openFloat
+                    Do Until initPos <= closeFloat
+                        initPos -= 0.0006F
+                        Native.Function.Call(Hash._0xF8EBCCC96ADB9FB7, veh, initPos, False)
+                        Script.Wait(1)
+                    Loop
+                    Native.Function.Call(Hash._0xF8EBCCC96ADB9FB7, veh, closeFloat, False)
+            End Select
+            Audio.StopSound(soundId)
+        End If
+    End Sub
 
 End Module
 
