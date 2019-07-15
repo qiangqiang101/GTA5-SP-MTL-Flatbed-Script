@@ -70,9 +70,12 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Class\CfgRead.vb" />
+    <Compile Include="Class\FlatbedData.vb" />
+    <Compile Include="Class\FlatbedVeh.vb" />
     <Compile Include="Flatbed.vb" />
-    <Compile Include="Helper.vb" />
-    <Compile Include="Logger.vb" />
+    <Compile Include="Class\Helper.vb" />
+    <Compile Include="Class\Logger.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
