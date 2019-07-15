@@ -1,0 +1,13 @@
+D:\Projects\Mods\Flatbed\Flatbed\bin\Release\Flatbed.dll
+D:\Projects\Mods\Flatbed\Flatbed\bin\Release\Flatbed.pdb
+D:\Projects\Mods\Flatbed\Flatbed\bin\Release\Flatbed.xml
+D:\Projects\Mods\Flatbed\Flatbed\bin\Release\Metadata.dll
+D:\Projects\Mods\Flatbed\Flatbed\bin\Release\ScriptHookVDotNet2.dll
+D:\Projects\Mods\Flatbed\Flatbed\bin\Release\Metadata.pdb
+D:\Projects\Mods\Flatbed\Flatbed\bin\Release\ScriptHookVDotNet2.xml
+D:\Projects\Mods\Flatbed\Flatbed\obj\Release\Flatbed.vbprojResolveAssemblyReference.cache
+D:\Projects\Mods\Flatbed\Flatbed\obj\Release\Flatbed.Resources.resources
+D:\Projects\Mods\Flatbed\Flatbed\obj\Release\Flatbed.vbproj.GenerateResource.Cache
+D:\Projects\Mods\Flatbed\Flatbed\obj\Release\Flatbed.dll
+D:\Projects\Mods\Flatbed\Flatbed\obj\Release\Flatbed.xml
+D:\Projects\Mods\Flatbed\Flatbed\obj\Release\Flatbed.pdb
