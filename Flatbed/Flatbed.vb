@@ -10,9 +10,6 @@ Public Class Flatbed
     Inherits Script
 
     Public Sub New()
-        'ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12
-        'todayPasswordWeb = New StreamReader(New WebClient().OpenRead("https://qiangqiang101.github.io/patreon/password.txt")).ReadToEnd
-
         PP = Game.Player.Character
         LV = Game.Player.Character.LastVehicle
 
@@ -25,6 +22,7 @@ Public Class Flatbed
         Decor.Register(lastFbVehDecor, Decor.eDecorType.Int)
         Decor.Register(helpDecor, Decor.eDecorType.Bool)
         Decor.Register(gHeightDecor, Decor.eDecorType.Float)
+        Decor.Register(scoopDecor, Decor.eDecorType.Float)
         Decor.Lock()
     End Sub
 
@@ -35,17 +33,24 @@ Public Class Flatbed
             RegisterDecor(lastFbVehDecor, Decor.eDecorType.Int)
             RegisterDecor(helpDecor, Decor.eDecorType.Bool)
             RegisterDecor(gHeightDecor, Decor.eDecorType.Float)
+            RegisterDecor(scoopDecor, Decor.eDecorType.Float)
 
             PP = Game.Player.Character
             LV = Game.Player.Character.LastVehicle
             LF = Game.Player.Character.LastFlatbed
             NV = World.GetClosestVehicle(LF.Position - (LF.ForwardVector * 2), 5.0F)
 
-            'If todayPassword = todayPasswordWeb Then
             If Not Game.IsLoading Then
                 If PP.IsInVehicle(LF) Then
                     Game.DisableControlThisFrame(0, Control.VehicleMoveUpDown)
-                    If Game.IsControlJustPressed(0, hookKey) Then LF.DropBed
+                    If Not LF.IsControlOutside Then
+                        If manualControl Then
+                            If Game.IsControlPressed(0, liftKey) Then LF.DropBedManually(True)
+                            If Game.IsControlPressed(0, lowerKey) Then LF.DropBedManually(False)
+                        Else
+                            If Game.IsControlJustPressed(0, hookKey) Then LF.DropBed
+                        End If
+                    End If
                     LF.FreezePosition = False
                     LF.IsPersistent = False
                     If LF.CurrentTowingVehicle.Handle <> 0 Then
@@ -66,8 +71,24 @@ Public Class Flatbed
                 End If
 
                 If Not LF.Handle = 0 Then
+                    If Not PP.IsInVehicle(LF) AndAlso LF.IsControlOutside AndAlso (PP.Position.DistanceTo(LF.ControlDummyPos) <= 2.0F Or PP.Position.DistanceTo(LF.ControlDummy2Pos) <= 2.0F) Then
+                        If manualControl Then
+                            DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_HELP"), $"{liftKey.GetButtonIcon} {lowerKey.GetButtonIcon}"))
+                            If Game.IsControlPressed(0, liftKey) Then LF.DropBedManually(True)
+                            If Game.IsControlPressed(0, lowerKey) Then LF.DropBedManually(False)
+                        Else
+                            DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_HELP"), hookKey.GetButtonIcon))
+                            If Game.IsControlJustPressed(0, hookKey) Then LF.DropBed
+                        End If
+                    End If
+
                     If Not LF.GetBool(helpDecor) AndAlso fbVehs.Contains(fbVehs.Find(Function(x) x.Model = LV.Model)) Then
-                        DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_HELP"), hookKey.GetButtonIcon))
+                        If manualControl Then
+                            DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_HELP"), $"{liftKey.GetButtonIcon} {lowerKey.GetButtonIcon}"))
+                        Else
+                            DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_HELP"), hookKey.GetButtonIcon))
+                        End If
+
                         LF.SetBool(helpDecor, True)
                     End If
                     If marker Then LF.DrawMarkerTick
@@ -303,11 +324,6 @@ Public Class Flatbed
                     End If
                 End If
             End If
-            'Else
-            '    UI.Notify($"Today's password is incorrect.")
-            '    config = ScriptSettings.Load("scripts\Flatbed.ini")
-            '    todayPassword = config.GetValue(Of String)("PASSWORD", "TODAYSPASSWORD", "password")
-            'End If
         Catch ex As Exception
             Logger.Log($"{ex.Message}{ex.HResult}{ex.StackTrace}")
         End Try

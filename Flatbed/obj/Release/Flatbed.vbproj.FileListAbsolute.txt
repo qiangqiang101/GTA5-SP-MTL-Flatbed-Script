@@ -11,3 +11,16 @@ D:\Projects\Mods\Flatbed\Flatbed\obj\Release\Flatbed.vbproj.GenerateResource.Cac
 D:\Projects\Mods\Flatbed\Flatbed\obj\Release\Flatbed.dll
 D:\Projects\Mods\Flatbed\Flatbed\obj\Release\Flatbed.xml
 D:\Projects\Mods\Flatbed\Flatbed\obj\Release\Flatbed.pdb
+E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\bin\Release\Flatbed.dll
+E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\bin\Release\Flatbed.pdb
+E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\bin\Release\Flatbed.xml
+E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\bin\Release\Metadata.dll
+E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\bin\Release\ScriptHookVDotNet2.dll
+E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\bin\Release\Metadata.pdb
+E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\bin\Release\ScriptHookVDotNet2.xml
+E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\obj\Release\Flatbed.vbprojResolveAssemblyReference.cache
+E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\obj\Release\Flatbed.Resources.resources
+E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\obj\Release\Flatbed.vbproj.GenerateResource.Cache
+E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\obj\Release\Flatbed.dll
+E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\obj\Release\Flatbed.xml
+E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\obj\Release\Flatbed.pdb

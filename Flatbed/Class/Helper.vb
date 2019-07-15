@@ -14,9 +14,10 @@ Module Helper
     Public config As ScriptSettings = ScriptSettings.Load("scripts\Flatbed\Config.ini")
     Public marker As Boolean = True
     Public hookKey As Control = Control.VehicleDuck
+    Public liftKey As Control = Control.VehicleSubAscend
+    Public lowerKey As Control = Control.VehicleSubDescend
+    Public manualControl As Boolean = False
     Public fbVehs As New List(Of FlatbedVeh)
-    'Public todayPassword As String = "password"
-    'Public todayPasswordWeb As String = "password"
 
     'Decor
     Public modDecor As String = "inm_flatbed_installed"
@@ -25,6 +26,7 @@ Module Helper
     Public helpDecor As String = "inm_flatbed_help"
     Public persistencePauseDecor As String = "inm_persistence_pause"
     Public gHeightDecor As String = "inm_flatbed_groundheight"
+    Public scoopDecor As String = "inm_flatbed_scoop_pos"
 
     Public PP As Ped
     Public LV As Vehicle, LF As Vehicle
@@ -46,8 +48,6 @@ Module Helper
 
     <Extension>
     Public Function IsThisFlatbed3(veh As Vehicle) As Boolean
-        'Return veh.Model = fbModel
-        'Return fbModels.Contains(veh.Model)
         Return fbVehs.Contains(fbVehs.Find(Function(x) x.Model = veh.Model))
     End Function
 
@@ -70,9 +70,9 @@ Module Helper
     Public Function IsFlatbedDropped(veh As Vehicle) As Boolean
         Dim result As Boolean = False
         Select Case veh.GetBoneCoord("engine").DistanceTo(veh.AttachDummyPos)
-            Case 7.0F To 7.5F
+            Case 7.0F To 9.5F
                 result = False
-            Case 11.5F To 13.0F
+            Case 9.5F To 13.0F
                 result = True
         End Select
         Return result
@@ -90,9 +90,19 @@ Module Helper
 
     <Extension>
     Public Sub DrawMarkerTick(veh As Vehicle)
-        If veh.IsFlatbedDropped AndAlso veh.CurrentTowingVehicle.Handle = 0 Then 'AndAlso Game.Player.Character.LastVehicle = veh Then
+        If veh.IsFlatbedDropped AndAlso veh.CurrentTowingVehicle.Handle = 0 Then
             Dim pos As New Vector3(veh.AttachPosition.X, veh.AttachPosition.Y, veh.AttachPosition.Z - 1.0F)
             World.DrawMarker(MarkerType.VerticalCylinder, pos, Vector3.Zero, Vector3.Zero, New Vector3(2.0F, 2.0F, 3.0F), Color.FromArgb(100, Color.GreenYellow))
+        End If
+        If veh.IsControlOutside AndAlso Not PP.IsInVehicle(veh) Then
+            If veh.HasBone(veh.ControlDummyBone) Then
+                Dim pos As New Vector3(veh.ControlDummyPos.X, veh.ControlDummyPos.Y, veh.ControlDummyPos.Z - 1.0F)
+                World.DrawMarker(MarkerType.VerticalCylinder, pos, Vector3.Zero, Vector3.Zero, New Vector3(1.0F, 1.0F, 2.0F), Color.FromArgb(100, Color.WhiteSmoke))
+            End If
+            If veh.HasBone(veh.ControlDummy2Bone) Then
+                Dim pos As New Vector3(veh.ControlDummy2Pos.X, veh.ControlDummy2Pos.Y, veh.ControlDummy2Pos.Z - 1.0F)
+                World.DrawMarker(MarkerType.VerticalCylinder, pos, Vector3.Zero, Vector3.Zero, New Vector3(1.0F, 1.0F, 2.0F), Color.FromArgb(100, Color.WhiteSmoke))
+            End If
         End If
     End Sub
 
@@ -182,15 +192,19 @@ Module Helper
     Public Sub LoadSettings()
         CreateConfig()
         marker = config.GetValue(Of Boolean)("SETTING", "MARKER", True)
+        manualControl = config.GetValue(Of Boolean)("SETTING", "MANUALCONTROL", False)
         hookKey = config.GetValue(Of Control)("CONTROL", "HOOKKEY", Control.VehicleDuck)
-        'todayPassword = config.GetValue(Of String)("PASSWORD", "TODAYSPASSWORD", "password")
+        liftKey = config.GetValue(Of Control)("CONTROL", "LIFTKEY", Control.VehicleSubAscend)
+        lowerKey = config.GetValue(Of Control)("CONTROL", "LOWERKEY", Control.VehicleSubDescend)
     End Sub
 
     Private Sub CreateConfig()
         If Not File.Exists("scripts\Flatbed\Config.ini") Then
             config.SetValue(Of Boolean)("SETTING", "MARKER", True)
+            config.SetValue(Of Boolean)("SETTING", "MANUALCONTROL", False)
             config.SetValue(Of Control)("CONTROL", "HOOKKEY", Control.VehicleDuck)
-            'config.SetValue(Of String)("PASSWORD", "TODAYSPASSWORD", "vanilla vanilla vanilla")
+            config.SetValue(Of Control)("CONTROL", "LIFTKEY", Control.VehicleSubAscend)
+            config.SetValue(Of Control)("CONTROL", "LOWERKEY", Control.VehicleSubDescend)
             config.Save()
         End If
     End Sub
@@ -643,6 +657,7 @@ Module Helper
                 Case 6.0F To 9.0F
                     Dim initPos As Single = closeFloat
                     Do Until initPos >= openFloat
+                        veh.ActivePhysics
                         initPos += 0.0006F
                         Native.Function.Call(Hash._0xF8EBCCC96ADB9FB7, veh, initPos, False)
                         Game.DisableControlThisFrame(0, Control.VehicleMoveUpDown)
@@ -652,6 +667,7 @@ Module Helper
                 Case 9.1F To 13.0F
                     Dim initPos As Single = openFloat
                     Do Until initPos <= closeFloat
+                        veh.ActivePhysics
                         initPos -= 0.0006F
                         Native.Function.Call(Hash._0xF8EBCCC96ADB9FB7, veh, initPos, False)
                         Game.DisableControlThisFrame(0, Control.VehicleMoveUpDown)
@@ -660,6 +676,32 @@ Module Helper
                     Native.Function.Call(Hash._0xF8EBCCC96ADB9FB7, veh, closeFloat, False)
             End Select
             Audio.StopSound(soundId)
+        End If
+    End Sub
+
+    <Extension>
+    Public Sub DropBedManually(veh As Vehicle, isLift As Boolean)
+        If veh.IsAlive Then
+            If Not veh.EngineRunning Then veh.EngineRunning = True
+            veh.LeftIndicatorLightOn = True
+            veh.RightIndicatorLightOn = True
+            Dim closeFloat As Single = 0.03F
+            Dim openFloat As Single = 0.26F
+            Dim scoopFloat As Single = veh.GetFloat(scoopDecor)
+            Select Case isLift
+                Case True
+                    veh.ActivePhysics
+                    scoopFloat -= 0.0003F
+                    If scoopFloat <= closeFloat Then scoopFloat = closeFloat
+                    Native.Function.Call(Hash._0xF8EBCCC96ADB9FB7, veh, scoopFloat, False)
+                    veh.SetFloat(scoopDecor, scoopFloat)
+                Case False
+                    veh.ActivePhysics
+                    scoopFloat += 0.0003F
+                    If scoopFloat >= openFloat Then scoopFloat = openFloat
+                    Native.Function.Call(Hash._0xF8EBCCC96ADB9FB7, veh, scoopFloat, False)
+                    veh.SetFloat(scoopDecor, scoopFloat)
+            End Select
         End If
     End Sub
 
@@ -685,6 +727,16 @@ Module Helper
     End Function
 
     <Extension>
+    Public Function ControlDummyPos(veh As Vehicle) As Vector3
+        Return veh.GetBoneCoord(fbVehs.Find(Function(x) x.Model = veh.Model).ControlDummy)
+    End Function
+
+    <Extension>
+    Public Function ControlDummy2Pos(veh As Vehicle) As Vector3
+        Return veh.GetBoneCoord(fbVehs.Find(Function(x) x.Model = veh.Model).ControlDummy2)
+    End Function
+
+    <Extension>
     Public Function AttachDummyIndex(veh As Vehicle) As Integer
         Return veh.GetBoneIndex(fbVehs.Find(Function(x) x.Model = veh.Model).AttachDummy)
     End Function
@@ -692,6 +744,31 @@ Module Helper
     <Extension>
     Public Function WinchDummyIndex(veh As Vehicle) As Integer
         Return veh.GetBoneIndex(fbVehs.Find(Function(x) x.Model = veh.Model).WinchDummy)
+    End Function
+
+    <Extension>
+    Public Function ControlDummyIndex(veh As Vehicle) As Integer
+        Return veh.GetBoneIndex(fbVehs.Find(Function(x) x.Model = veh.Model).ControlDummy)
+    End Function
+
+    <Extension>
+    Public Function ControlDummy2Index(veh As Vehicle) As Integer
+        Return veh.GetBoneIndex(fbVehs.Find(Function(x) x.Model = veh.Model).ControlDummy2)
+    End Function
+
+    <Extension>
+    Public Function ControlDummyBone(veh As Vehicle) As String
+        Return fbVehs.Find(Function(x) x.Model = veh.Model).ControlDummy
+    End Function
+
+    <Extension>
+    Public Function ControlDummy2Bone(veh As Vehicle) As String
+        Return fbVehs.Find(Function(x) x.Model = veh.Model).ControlDummy2
+    End Function
+
+    <Extension>
+    Public Function IsControlOutside(veh As Vehicle) As Boolean
+        Return fbVehs.Find(Function(x) x.Model = veh.Model).ControlIsOutside
     End Function
 
     <Extension>
@@ -709,7 +786,7 @@ Module Helper
             For Each file As String In files
                 procFile = file
                 Dim fd As FlatbedData = New FlatbedData(file).Instance
-                Dim fv As New FlatbedVeh(fd.Model, fd.AttachDummy, fd.WinchDummy)
+                Dim fv As New FlatbedVeh(fd.Model, fd.AttachDummy, fd.WinchDummy, fd.ControlDummy, fd.ControlDummy2, fd.ControlIsOutside)
                 If Not fbVehs.Contains(fv) Then fbVehs.Add(fv)
             Next
         Catch ex As Exception
@@ -726,6 +803,11 @@ Module Helper
         If veh.LockStatus = VehicleLockStatus.LockedForPlayer Then result = False
         Return result
     End Function
+
+    <Extension>
+    Public Sub ActivePhysics(veh As Vehicle)
+        Native.Function.Call(Hash.ACTIVATE_PHYSICS, veh)
+    End Sub
 
 End Module
 

@@ -15,6 +15,9 @@ Public Structure FlatbedData
     Public Model As String
     Public AttachDummy As String
     Public WinchDummy As String
+    Public ControlDummy As String
+    Public ControlDummy2 As String
+    Public ControlIsOutside As Boolean
 
     Public Sub New(_filename As String)
         FileName = _filename
@@ -29,7 +32,7 @@ Public Structure FlatbedData
 
     Public Function ReadFromFile() As FlatbedData
         If Not File.Exists(FileName) Then
-            Return New FlatbedData(FileName) With {.Model = Model, .AttachDummy = AttachDummy, .WinchDummy = WinchDummy}
+            Return New FlatbedData(FileName) With {.Model = Model, .AttachDummy = AttachDummy, .WinchDummy = WinchDummy, .ControlDummy = ControlDummy, .ControlDummy2 = ControlDummy2, .ControlIsOutside = False}
         End If
 
         Try
@@ -39,7 +42,7 @@ Public Structure FlatbedData
             reader.Close()
             Return instance
         Catch ex As Exception
-            Return New FlatbedData(FileName) With {.Model = Model, .AttachDummy = AttachDummy, .WinchDummy = WinchDummy}
+            Return New FlatbedData(FileName) With {.Model = Model, .AttachDummy = AttachDummy, .WinchDummy = WinchDummy, .ControlDummy = ControlDummy, .ControlDummy2 = ControlDummy2, .ControlIsOutside = False}
         End Try
     End Function
 
