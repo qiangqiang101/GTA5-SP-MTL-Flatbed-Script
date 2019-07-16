@@ -41,6 +41,8 @@ Public Class Flatbed
             NV = World.GetClosestVehicle(LF.Position - (LF.ForwardVector * 2), 5.0F)
 
             If Not Game.IsLoading Then
+                PP.LastFlatbed(PP.Position.GetNearestFlatbed)
+
                 If PP.IsInVehicle(LF) Then
                     Game.DisableControlThisFrame(0, Control.VehicleMoveUpDown)
                     If Not LF.IsControlOutside Then
@@ -67,15 +69,19 @@ Public Class Flatbed
 
                 If PP.IsInVehicle Then
                     If PP.CurrentVehicle.IsOnAllWheels AndAlso PP.CurrentVehicle.GetFloat(gHeightDecor) = 0F Then PP.CurrentVehicle.SetFloat(gHeightDecor, PP.CurrentVehicle.HeightAboveGround)
-                    If PP.CurrentVehicle.IsThisFlatbed3 Then PP.LastFlatbed(PP.CurrentVehicle)
+                    If PP.CurrentVehicle.IsThisFlatbed3 Then If Not LFList.Contains(PP.CurrentVehicle) Then LFList.Add(PP.CurrentVehicle)
                 End If
 
                 If Not LF.Handle = 0 Then
                     If Not PP.IsInVehicle(LF) AndAlso LF.IsControlOutside AndAlso (PP.Position.DistanceTo(LF.ControlDummyPos) <= 2.0F Or PP.Position.DistanceTo(LF.ControlDummy2Pos) <= 2.0F) Then
                         If manualControl Then
                             DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_HELP"), $"{liftKey.GetButtonIcon} {lowerKey.GetButtonIcon}"))
+                            'If Game.IsControlPressed(0, liftKey) Then PP.PlayDropBedAnimation(LF) : LF.DropBedManually(True)
+                            'If Game.IsControlPressed(0, lowerKey) Then PP.PlayDropBedAnimation(LF) : LF.DropBedManually(False)
                             If Game.IsControlPressed(0, liftKey) Then LF.DropBedManually(True)
                             If Game.IsControlPressed(0, lowerKey) Then LF.DropBedManually(False)
+                            'If Game.IsControlJustReleased(0, liftKey) Then PP.StopDropBedAnimation
+                            'If Game.IsControlJustReleased(0, lowerKey) Then PP.StopDropBedAnimation
                         Else
                             DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_HELP"), hookKey.GetButtonIcon))
                             If Game.IsControlJustPressed(0, hookKey) Then LF.DropBed

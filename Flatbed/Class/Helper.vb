@@ -34,7 +34,13 @@ Module Helper
     Public AC As New List(Of VehicleClass) From {VehicleClass.Commercial, VehicleClass.Compacts, VehicleClass.Coupes, VehicleClass.Cycles, VehicleClass.Emergency, VehicleClass.Industrial,
         VehicleClass.Military, VehicleClass.Motorcycles, VehicleClass.Muscle, VehicleClass.OffRoad, VehicleClass.Sedans, VehicleClass.Service, VehicleClass.Sports, VehicleClass.SportsClassics,
         VehicleClass.Super, VehicleClass.SUVs, VehicleClass.Utility, VehicleClass.Vans}
+    Public LFList As New List(Of Vehicle) From {Game.Player.Character.LastFlatbed}
     Public xmlPath As String = ".\scripts\Flatbed\Vehicles\"
+
+    <Extension>
+    Public Function GetNearestFlatbed(pos As Vector3) As Vehicle
+        Return LFList.OrderBy(Function(x) System.Math.Abs(x.Position.DistanceTo(pos))).First
+    End Function
 
     <Extension>
     Public Function AttachCoords(vehicle As Vehicle) As Vector3
@@ -92,16 +98,16 @@ Module Helper
     Public Sub DrawMarkerTick(veh As Vehicle)
         If veh.IsFlatbedDropped AndAlso veh.CurrentTowingVehicle.Handle = 0 Then
             Dim pos As New Vector3(veh.AttachPosition.X, veh.AttachPosition.Y, veh.AttachPosition.Z - 1.0F)
-            World.DrawMarker(MarkerType.VerticalCylinder, pos, Vector3.Zero, Vector3.Zero, New Vector3(2.0F, 2.0F, 3.0F), Color.FromArgb(100, Color.GreenYellow))
+            World.DrawMarker(MarkerType.VerticalCylinder, pos, Vector3.Zero, Vector3.Zero, New Vector3(2.0F, 2.0F, 2.0F), Color.FromArgb(100, Color.GreenYellow))
         End If
         If veh.IsControlOutside AndAlso Not PP.IsInVehicle(veh) Then
             If veh.HasBone(veh.ControlDummyBone) Then
                 Dim pos As New Vector3(veh.ControlDummyPos.X, veh.ControlDummyPos.Y, veh.ControlDummyPos.Z - 1.0F)
-                World.DrawMarker(MarkerType.VerticalCylinder, pos, Vector3.Zero, Vector3.Zero, New Vector3(1.0F, 1.0F, 2.0F), Color.FromArgb(100, Color.WhiteSmoke))
+                World.DrawMarker(MarkerType.VerticalCylinder, pos, Vector3.Zero, Vector3.Zero, New Vector3(1.0F, 1.0F, 0.5F), Color.FromArgb(100, Color.WhiteSmoke))
             End If
             If veh.HasBone(veh.ControlDummy2Bone) Then
                 Dim pos As New Vector3(veh.ControlDummy2Pos.X, veh.ControlDummy2Pos.Y, veh.ControlDummy2Pos.Z - 1.0F)
-                World.DrawMarker(MarkerType.VerticalCylinder, pos, Vector3.Zero, Vector3.Zero, New Vector3(1.0F, 1.0F, 2.0F), Color.FromArgb(100, Color.WhiteSmoke))
+                World.DrawMarker(MarkerType.VerticalCylinder, pos, Vector3.Zero, Vector3.Zero, New Vector3(1.0F, 1.0F, 0.5F), Color.FromArgb(100, Color.WhiteSmoke))
             End If
         End If
     End Sub
@@ -645,6 +651,7 @@ Module Helper
     <Extension>
     Public Sub DropBed(veh As Vehicle)
         If veh.IsAlive Then
+            'PP.PlayDropBedAnimation(veh)
             If Not veh.EngineRunning Then veh.EngineRunning = True
             veh.LeftIndicatorLightOn = True
             veh.RightIndicatorLightOn = True
@@ -676,8 +683,31 @@ Module Helper
                     Native.Function.Call(Hash._0xF8EBCCC96ADB9FB7, veh, closeFloat, False)
             End Select
             Audio.StopSound(soundId)
+            'PP.StopDropBedAnimation
         End If
     End Sub
+
+    '<Extension>
+    'Public Function IsUsingScenario(ped As Ped, sc As String) As Boolean
+    '    Return Native.Function.Call(Of Boolean)(Hash.IS_PED_USING_SCENARIO, ped, sc)
+    'End Function
+
+    '<Extension>
+    'Public Sub StartScenarioInPlace(ped As Ped, sc As String)
+    '    Native.Function.Call(Hash.TASK_START_SCENARIO_IN_PLACE, ped, sc, 0, True)
+    'End Sub
+
+    '<Extension>
+    'Public Sub PlayDropBedAnimation(ped As Ped, veh As Vehicle)
+    '    If ped.Position.DistanceTo(veh.ControlDummyPos) <= 1.5F Or ped.Position.DistanceTo(veh.ControlDummy2Pos) <= 1.5F Then
+    '        If Not ped.IsUsingScenario("PROP_HUMAN_ATM") Then ped.StartScenarioInPlace("PROP_HUMAN_ATM")
+    '    End If
+    'End Sub
+
+    '<Extension>
+    'Public Sub StopDropBedAnimation(ped As Ped)
+    '    If ped.IsUsingScenario("PROP_HUMAN_ATM") Then ped.Task.ClearAll()
+    'End Sub
 
     <Extension>
     Public Sub DropBedManually(veh As Vehicle, isLift As Boolean)
@@ -771,6 +801,83 @@ Module Helper
         Return fbVehs.Find(Function(x) x.Model = veh.Model).ControlIsOutside
     End Function
 
+    '<Extension>
+    'Public Sub DoorOpen(veh As Vehicle, door As eVehDoor, Optional instantly As Boolean = False)
+    '    Select Case door
+    '        Case eVehDoor.BackLeftDoor
+    '            veh.OpenDoor(VehicleDoor.BackLeftDoor, False, instantly)
+    '        Case eVehDoor.BackRightDoor
+    '            veh.OpenDoor(VehicleDoor.BackRightDoor, False, instantly)
+    '        Case eVehDoor.Bombbay
+    '            veh.OpenBombBay()
+    '        Case eVehDoor.Bonnet, eVehDoor.Hood
+    '            veh.OpenDoor(VehicleDoor.Hood, False, instantly)
+    '        Case eVehDoor.Boot, eVehDoor.Trunk
+    '            veh.OpenDoor(VehicleDoor.Trunk, False, instantly)
+    '        Case eVehDoor.FrontLeftDoor
+    '            veh.OpenDoor(VehicleDoor.FrontLeftDoor, False, instantly)
+    '        Case eVehDoor.FrontRightDoor
+    '            veh.OpenDoor(VehicleDoor.FrontRightDoor, False, instantly)
+    '    End Select
+    'End Sub
+
+    '<Extension>
+    'Public Sub DoorClose(veh As Vehicle, door As eVehDoor, Optional instantly As Boolean = False)
+    '    Select Case door
+    '        Case eVehDoor.BackLeftDoor
+    '            veh.CloseDoor(VehicleDoor.BackLeftDoor, instantly)
+    '        Case eVehDoor.BackRightDoor
+    '            veh.CloseDoor(VehicleDoor.BackRightDoor, instantly)
+    '        Case eVehDoor.Bombbay
+    '            veh.CloseBombBay()
+    '        Case eVehDoor.Bonnet, eVehDoor.Hood
+    '            veh.CloseDoor(VehicleDoor.Hood, instantly)
+    '        Case eVehDoor.Boot, eVehDoor.Trunk
+    '            veh.CloseDoor(VehicleDoor.Trunk, instantly)
+    '        Case eVehDoor.FrontLeftDoor
+    '            veh.CloseDoor(VehicleDoor.FrontLeftDoor, instantly)
+    '        Case eVehDoor.FrontRightDoor
+    '            veh.CloseDoor(VehicleDoor.FrontRightDoor, instantly)
+    '    End Select
+    'End Sub
+
+    '<Extension>
+    'Public Function Controldoor(veh As Vehicle) As eVehDoor
+    '    Dim bone As String = fbVehs.Find(Function(x) x.Model = veh.Model).ControlDoorDummy
+    '    Select Case bone
+    '        Case "none"
+    '            Return eVehDoor.None
+    '        Case "door_dside_f"
+    '            Return eVehDoor.FrontLeftDoor
+    '        Case "door_pside_f"
+    '            Return eVehDoor.FrontRightDoor
+    '        Case "door_dside_r"
+    '            Return eVehDoor.BackLeftDoor
+    '        Case "door_pside_r"
+    '            Return eVehDoor.BackRightDoor
+    '        Case "bonnet"
+    '            Return eVehDoor.Bonnet
+    '        Case "boot"
+    '            Return eVehDoor.Boot
+    '        Case "door_hatch_l", "door_hatch_r"
+    '            Return eVehDoor.Bombbay
+    '    End Select
+    '    Return eVehDoor.None
+    'End Function
+
+    Public Enum eVehDoor
+        None = -1
+        FrontLeftDoor
+        FrontRightDoor
+        BackLeftDoor
+        BackRightDoor
+        Hood
+        Bonnet = 4
+        Trunk
+        Boot = 5
+        Bombbay
+    End Enum
+
     <Extension>
     Public Function IsAnyPedBlockingVehicle(veh As Vehicle) As Boolean
         Dim pos As Vector3 = veh.GetRopeHookRear
@@ -786,7 +893,7 @@ Module Helper
             For Each file As String In files
                 procFile = file
                 Dim fd As FlatbedData = New FlatbedData(file).Instance
-                Dim fv As New FlatbedVeh(fd.Model, fd.AttachDummy, fd.WinchDummy, fd.ControlDummy, fd.ControlDummy2, fd.ControlIsOutside)
+                Dim fv As New FlatbedVeh(fd.Model, fd.AttachDummy, fd.WinchDummy, fd.ControlDummy, fd.ControlDummy2, fd.ControlIsOutside) ', fd.ControlDoorDummy, fd.ControlDoorDummy2)
                 If Not fbVehs.Contains(fv) Then fbVehs.Add(fv)
             Next
         Catch ex As Exception
