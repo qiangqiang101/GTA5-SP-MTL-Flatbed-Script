@@ -55,7 +55,7 @@ Public Class Flatbed
                     End If
                     LF.FreezePosition = False
                     LF.IsPersistent = False
-                    If LF.CurrentTowingVehicle.Handle <> 0 Then
+                    If LF.CurrentTowingVehicle.Handle <> 0 AndAlso PP.IsInVehicle(LF) Then
                         If Game.IsControlPressed(2, Control.VehicleAccelerate) Then
                             Native.Function.Call(Hash.APPLY_FORCE_TO_ENTITY, Game.Player.LastVehicle, 3, 0F, -0.04F, 0F, 0F, 0F, 0F, 0, True, True, True, True, True)
                         End If
