@@ -668,7 +668,9 @@ Module Helper
                         initPos += 0.0006F
                         Native.Function.Call(Hash._0xF8EBCCC96ADB9FB7, veh, initPos, False)
                         Game.DisableControlThisFrame(0, Control.VehicleMoveUpDown)
+                        If veh.FlatbedExtraDoorEnable Then veh.SetDoorAngle(veh.FlatbedExtraDoor, (initPos + veh.FlatbedExtraDoorAngleAdjustment))
                         Script.Wait(1)
+                        veh.SetFloat(scoopDecor, initPos)
                     Loop
                     Native.Function.Call(Hash._0xF8EBCCC96ADB9FB7, veh, openFloat, False)
                 Case 9.1F To 13.0F
@@ -678,10 +680,16 @@ Module Helper
                         initPos -= 0.0006F
                         Native.Function.Call(Hash._0xF8EBCCC96ADB9FB7, veh, initPos, False)
                         Game.DisableControlThisFrame(0, Control.VehicleMoveUpDown)
+                        If veh.FlatbedExtraDoorEnable Then veh.SetDoorAngle(veh.FlatbedExtraDoor, (initPos + veh.FlatbedExtraDoorAngleAdjustment))
                         Script.Wait(1)
+                        veh.SetFloat(scoopDecor, initPos)
                     Loop
                     Native.Function.Call(Hash._0xF8EBCCC96ADB9FB7, veh, closeFloat, False)
             End Select
+
+            If veh.FlatbedExtraDoorEnable Then
+                If veh.GetFloat(scoopDecor) <= closeFloat Then veh.CloseDoor(veh.FlatbedExtraDoor, False)
+            End If
             Audio.StopSound(soundId)
             'PP.StopDropBedAnimation
         End If
@@ -718,21 +726,32 @@ Module Helper
             Dim closeFloat As Single = 0.03F
             Dim openFloat As Single = 0.26F
             Dim scoopFloat As Single = veh.GetFloat(scoopDecor)
+
             Select Case isLift
                 Case True
                     veh.ActivePhysics
                     scoopFloat -= 0.0003F
                     If scoopFloat <= closeFloat Then scoopFloat = closeFloat
                     Native.Function.Call(Hash._0xF8EBCCC96ADB9FB7, veh, scoopFloat, False)
+                    If veh.FlatbedExtraDoorEnable Then
+                        veh.SetDoorAngle(veh.FlatbedExtraDoor, scoopFloat + veh.FlatbedExtraDoorAngleAdjustment)
+                        If scoopFloat <= closeFloat Then veh.CloseDoor(veh.FlatbedExtraDoor, False)
+                    End If
                     veh.SetFloat(scoopDecor, scoopFloat)
                 Case False
                     veh.ActivePhysics
                     scoopFloat += 0.0003F
                     If scoopFloat >= openFloat Then scoopFloat = openFloat
                     Native.Function.Call(Hash._0xF8EBCCC96ADB9FB7, veh, scoopFloat, False)
+                    If veh.FlatbedExtraDoorEnable Then veh.SetDoorAngle(veh.FlatbedExtraDoor, scoopFloat + veh.FlatbedExtraDoorAngleAdjustment)
                     veh.SetFloat(scoopDecor, scoopFloat)
             End Select
         End If
+    End Sub
+
+    <Extension>
+    Public Sub SetDoorAngle(veh As Vehicle, door As VehicleDoor, val As Single)
+        Native.Function.Call(Hash.SET_VEHICLE_DOOR_CONTROL, veh.Handle, door, 2, val)
     End Sub
 
     Public Function GetLangEntry(lang As String) As String
@@ -744,6 +763,21 @@ Module Helper
             real_result = result
         End If
         Return real_result
+    End Function
+
+    <Extension>
+    Public Function FlatbedExtraDoorAngleAdjustment(veh As Vehicle) As Single
+        Return fbVehs.Find(Function(x) x.Model = veh.Model).ExtraDoorAngleAdjustment
+    End Function
+
+    <Extension>
+    Public Function FlatbedExtraDoorEnable(veh As Vehicle) As Boolean
+        Return fbVehs.Find(Function(x) x.Model = veh.Model).EnableExtraDoor
+    End Function
+
+    <Extension>
+    Public Function FlatbedExtraDoor(veh As Vehicle) As VehicleDoor
+        Return fbVehs.Find(Function(x) x.Model = veh.Model).ExtraDoorMove
     End Function
 
     <Extension>
@@ -801,83 +835,6 @@ Module Helper
         Return fbVehs.Find(Function(x) x.Model = veh.Model).ControlIsOutside
     End Function
 
-    '<Extension>
-    'Public Sub DoorOpen(veh As Vehicle, door As eVehDoor, Optional instantly As Boolean = False)
-    '    Select Case door
-    '        Case eVehDoor.BackLeftDoor
-    '            veh.OpenDoor(VehicleDoor.BackLeftDoor, False, instantly)
-    '        Case eVehDoor.BackRightDoor
-    '            veh.OpenDoor(VehicleDoor.BackRightDoor, False, instantly)
-    '        Case eVehDoor.Bombbay
-    '            veh.OpenBombBay()
-    '        Case eVehDoor.Bonnet, eVehDoor.Hood
-    '            veh.OpenDoor(VehicleDoor.Hood, False, instantly)
-    '        Case eVehDoor.Boot, eVehDoor.Trunk
-    '            veh.OpenDoor(VehicleDoor.Trunk, False, instantly)
-    '        Case eVehDoor.FrontLeftDoor
-    '            veh.OpenDoor(VehicleDoor.FrontLeftDoor, False, instantly)
-    '        Case eVehDoor.FrontRightDoor
-    '            veh.OpenDoor(VehicleDoor.FrontRightDoor, False, instantly)
-    '    End Select
-    'End Sub
-
-    '<Extension>
-    'Public Sub DoorClose(veh As Vehicle, door As eVehDoor, Optional instantly As Boolean = False)
-    '    Select Case door
-    '        Case eVehDoor.BackLeftDoor
-    '            veh.CloseDoor(VehicleDoor.BackLeftDoor, instantly)
-    '        Case eVehDoor.BackRightDoor
-    '            veh.CloseDoor(VehicleDoor.BackRightDoor, instantly)
-    '        Case eVehDoor.Bombbay
-    '            veh.CloseBombBay()
-    '        Case eVehDoor.Bonnet, eVehDoor.Hood
-    '            veh.CloseDoor(VehicleDoor.Hood, instantly)
-    '        Case eVehDoor.Boot, eVehDoor.Trunk
-    '            veh.CloseDoor(VehicleDoor.Trunk, instantly)
-    '        Case eVehDoor.FrontLeftDoor
-    '            veh.CloseDoor(VehicleDoor.FrontLeftDoor, instantly)
-    '        Case eVehDoor.FrontRightDoor
-    '            veh.CloseDoor(VehicleDoor.FrontRightDoor, instantly)
-    '    End Select
-    'End Sub
-
-    '<Extension>
-    'Public Function Controldoor(veh As Vehicle) As eVehDoor
-    '    Dim bone As String = fbVehs.Find(Function(x) x.Model = veh.Model).ControlDoorDummy
-    '    Select Case bone
-    '        Case "none"
-    '            Return eVehDoor.None
-    '        Case "door_dside_f"
-    '            Return eVehDoor.FrontLeftDoor
-    '        Case "door_pside_f"
-    '            Return eVehDoor.FrontRightDoor
-    '        Case "door_dside_r"
-    '            Return eVehDoor.BackLeftDoor
-    '        Case "door_pside_r"
-    '            Return eVehDoor.BackRightDoor
-    '        Case "bonnet"
-    '            Return eVehDoor.Bonnet
-    '        Case "boot"
-    '            Return eVehDoor.Boot
-    '        Case "door_hatch_l", "door_hatch_r"
-    '            Return eVehDoor.Bombbay
-    '    End Select
-    '    Return eVehDoor.None
-    'End Function
-
-    Public Enum eVehDoor
-        None = -1
-        FrontLeftDoor
-        FrontRightDoor
-        BackLeftDoor
-        BackRightDoor
-        Hood
-        Bonnet = 4
-        Trunk
-        Boot = 5
-        Bombbay
-    End Enum
-
     <Extension>
     Public Function IsAnyPedBlockingVehicle(veh As Vehicle) As Boolean
         Dim pos As Vector3 = veh.GetRopeHookRear
@@ -893,7 +850,7 @@ Module Helper
             For Each file As String In files
                 procFile = file
                 Dim fd As FlatbedData = New FlatbedData(file).Instance
-                Dim fv As New FlatbedVeh(fd.Model, fd.AttachDummy, fd.WinchDummy, fd.ControlDummy, fd.ControlDummy2, fd.ControlIsOutside) ', fd.ControlDoorDummy, fd.ControlDoorDummy2)
+                Dim fv As New FlatbedVeh(fd.Model, fd.AttachDummy, fd.WinchDummy, fd.ControlDummy, fd.ControlDummy2, fd.ControlIsOutside, fd.EnableExtraDoor, fd.ExtraDoorMove, fd.ExtraDoorAngleAdjustment) ', fd.ControlDoorDummy, fd.ControlDoorDummy2)
                 If Not fbVehs.Contains(fv) Then fbVehs.Add(fv)
             Next
         Catch ex As Exception

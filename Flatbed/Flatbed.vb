@@ -73,6 +73,11 @@ Public Class Flatbed
                 End If
 
                 If Not LF.Handle = 0 Then
+                    'Testing door
+                    'UI.ShowSubtitle($"{LF.FlatbedExtraDoor.ToString}: {LF.GetDoorAngleRatio(LF.FlatbedExtraDoor).ToString("0.0000")} Scoop: {LF.GetFloat(scoopDecor).ToString("0.0000")}")
+
+                    If LF.GetFloat(scoopDecor) > 0.03F Then LF.SetDoorAngle(LF.FlatbedExtraDoor, LF.GetFloat(scoopDecor) + LF.FlatbedExtraDoorAngleAdjustment)
+
                     If Not PP.IsInVehicle(LF) AndAlso LF.IsControlOutside AndAlso (PP.Position.DistanceTo(LF.ControlDummyPos) <= 2.0F Or PP.Position.DistanceTo(LF.ControlDummy2Pos) <= 2.0F) Then
                         If manualControl Then
                             DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_HELP"), $"{liftKey.GetButtonIcon} {lowerKey.GetButtonIcon}"))

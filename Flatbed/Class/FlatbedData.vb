@@ -1,5 +1,6 @@
 ﻿Imports System.IO
 Imports System.Xml.Serialization
+Imports GTA
 
 Public Structure FlatbedData
 
@@ -16,10 +17,11 @@ Public Structure FlatbedData
     Public AttachDummy As String
     Public WinchDummy As String
     Public ControlDummy As String
-    'Public ControlDoorDummy As String
     Public ControlDummy2 As String
-    'Public ControlDoorDummy2 As String
     Public ControlIsOutside As Boolean
+    Public EnableExtraDoor As Boolean
+    Public ExtraDoorMove As VehicleDoor
+    Public ExtraDoorAngleAdjustment As Single
 
     Public Sub New(_filename As String)
         FileName = _filename
@@ -34,7 +36,7 @@ Public Structure FlatbedData
 
     Public Function ReadFromFile() As FlatbedData
         If Not File.Exists(FileName) Then
-            Return New FlatbedData(FileName) With {.Model = Model, .AttachDummy = AttachDummy, .WinchDummy = WinchDummy, .ControlDummy = ControlDummy, .ControlDummy2 = ControlDummy2, .ControlIsOutside = False} ', .ControlDoorDummy = ControlDoorDummy, .ControlDoorDummy2 = ControlDoorDummy2}
+            Return New FlatbedData(FileName) With {.Model = Model, .AttachDummy = AttachDummy, .WinchDummy = WinchDummy, .ControlDummy = ControlDummy, .ControlDummy2 = ControlDummy2, .ControlIsOutside = False, .EnableExtraDoor = False, .ExtraDoorMove = VehicleDoor.Trunk, .ExtraDoorAngleAdjustment = 0F} ', .ControlDoorDummy = ControlDoorDummy, .ControlDoorDummy2 = ControlDoorDummy2}
         End If
 
         Try
@@ -44,7 +46,7 @@ Public Structure FlatbedData
             reader.Close()
             Return instance
         Catch ex As Exception
-            Return New FlatbedData(FileName) With {.Model = Model, .AttachDummy = AttachDummy, .WinchDummy = WinchDummy, .ControlDummy = ControlDummy, .ControlDummy2 = ControlDummy2, .ControlIsOutside = False} ', .ControlDoorDummy = ControlDoorDummy, .ControlDoorDummy2 = ControlDoorDummy2}
+            Return New FlatbedData(FileName) With {.Model = Model, .AttachDummy = AttachDummy, .WinchDummy = WinchDummy, .ControlDummy = ControlDummy, .ControlDummy2 = ControlDummy2, .ControlIsOutside = False, .EnableExtraDoor = False, .ExtraDoorMove = VehicleDoor.Trunk, .ExtraDoorAngleAdjustment = 0F} ', .ControlDoorDummy = ControlDoorDummy, .ControlDoorDummy2 = ControlDoorDummy2}
         End Try
     End Function
 
