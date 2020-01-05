@@ -47,8 +47,16 @@ Public Class Flatbed
                     Game.DisableControlThisFrame(0, Control.VehicleMoveUpDown)
                     If Not LF.IsControlOutside Then
                         If manualControl Then
-                            If Game.IsControlPressed(0, liftKey) Then LF.DropBedManually(True)
-                            If Game.IsControlPressed(0, lowerKey) Then LF.DropBedManually(False)
+                            If Game.CurrentInputMode = InputMode.MouseAndKeyboard Then
+                                If Game.IsControlPressed(0, liftKey) Then LF.DropBedManually(True)
+                                If Game.IsControlPressed(0, lowerKey) Then LF.DropBedManually(False)
+                            Else
+                                If Game.IsControlPressed(0, controllerModifierKey) Then
+                                    Game.DisableAllControlsThisFrame(0)
+                                    If Game.IsControlPressed(0, controllerLiftBtn) Then LF.DropBedManually(True)
+                                    If Game.IsControlPressed(0, controllerLowerBtn) Then LF.DropBedManually(False)
+                                End If
+                            End If
                         Else
                             If Game.IsControlJustPressed(0, hookKey) Then LF.DropBed
                         End If
@@ -72,21 +80,30 @@ Public Class Flatbed
                     If PP.CurrentVehicle.IsThisFlatbed3 Then If Not LFList.Contains(PP.CurrentVehicle) Then LFList.Add(PP.CurrentVehicle)
                 End If
 
+                If LF.CurrentTowingVehicle.Handle <> 0 Then
+                    LF.CurrentTowingVehicle.ActivePhysics
+                End If
+
                 If Not LF.Handle = 0 Then
                     'Testing door
                     'UI.ShowSubtitle($"{LF.FlatbedExtraDoor.ToString}: {LF.GetDoorAngleRatio(LF.FlatbedExtraDoor).ToString("0.0000")} Scoop: {LF.GetFloat(scoopDecor).ToString("0.0000")}")
 
                     If LF.GetFloat(scoopDecor) > 0.03F Then LF.SetDoorAngle(LF.FlatbedExtraDoor, LF.GetFloat(scoopDecor) + LF.FlatbedExtraDoorAngleAdjustment)
 
-                    If Not PP.IsInVehicle(LF) AndAlso LF.IsControlOutside AndAlso (PP.Position.DistanceTo(LF.ControlDummyPos) <= 2.0F Or PP.Position.DistanceTo(LF.ControlDummy2Pos) <= 2.0F) Then
+                    If Not PP.IsInVehicle(LF) AndAlso Not PP.IsInVehicle AndAlso LF.IsControlOutside AndAlso (PP.Position.DistanceTo(LF.ControlDummyPos) <= 2.0F Or PP.Position.DistanceTo(LF.ControlDummy2Pos) <= 2.0F) Then
                         If manualControl Then
-                            DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_HELP"), $"{liftKey.GetButtonIcon} {lowerKey.GetButtonIcon}"))
-                            'If Game.IsControlPressed(0, liftKey) Then PP.PlayDropBedAnimation(LF) : LF.DropBedManually(True)
-                            'If Game.IsControlPressed(0, lowerKey) Then PP.PlayDropBedAnimation(LF) : LF.DropBedManually(False)
-                            If Game.IsControlPressed(0, liftKey) Then LF.DropBedManually(True)
-                            If Game.IsControlPressed(0, lowerKey) Then LF.DropBedManually(False)
-                            'If Game.IsControlJustReleased(0, liftKey) Then PP.StopDropBedAnimation
-                            'If Game.IsControlJustReleased(0, lowerKey) Then PP.StopDropBedAnimation
+                            If Game.CurrentInputMode = InputMode.MouseAndKeyboard Then
+                                DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_HELP"), $"{liftKey.GetButtonIcon} {lowerKey.GetButtonIcon}"))
+                                If Game.IsControlPressed(0, liftKey) Then LF.DropBedManually(True)
+                                If Game.IsControlPressed(0, lowerKey) Then LF.DropBedManually(False)
+                            Else
+                                DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_HELP2"), $"{controllerLiftBtn.GetButtonIcon} {controllerLowerBtn.GetButtonIcon}", controllerModifierKey.GetButtonIcon))
+                                If Game.IsControlPressed(0, controllerModifierKey) Then
+                                    Game.DisableAllControlsThisFrame(0)
+                                    If Game.IsControlPressed(0, controllerLiftBtn) Then LF.DropBedManually(True)
+                                    If Game.IsControlPressed(0, controllerLowerBtn) Then LF.DropBedManually(False)
+                                End If
+                            End If
                         Else
                             DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_HELP"), hookKey.GetButtonIcon))
                             If Game.IsControlJustPressed(0, hookKey) Then LF.DropBed
@@ -95,7 +112,11 @@ Public Class Flatbed
 
                     If Not LF.GetBool(helpDecor) AndAlso fbVehs.Contains(fbVehs.Find(Function(x) x.Model = LV.Model)) Then
                         If manualControl Then
-                            DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_HELP"), $"{liftKey.GetButtonIcon} {lowerKey.GetButtonIcon}"))
+                            If Game.CurrentInputMode = InputMode.MouseAndKeyboard Then
+                                DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_HELP"), $"{liftKey.GetButtonIcon} {lowerKey.GetButtonIcon}"))
+                            Else
+                                DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_HELP2"), $"{controllerLiftBtn.GetButtonIcon} {controllerLowerBtn.GetButtonIcon}", controllerModifierKey.GetButtonIcon))
+                            End If
                         Else
                             DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_HELP"), hookKey.GetButtonIcon))
                         End If
@@ -219,7 +240,7 @@ Public Class Flatbed
                     End If
 
                     If Not PP.IsInVehicle AndAlso LF.IsFlatbedDropped AndAlso PP.Position.DistanceTo(LF.AttachDummyPos) <= 3.0F Then
-                        If World.GetDistance(LF.CurrentTowingVehicle.Position, PP.Position) <= 3.0F Then
+                        If World.GetDistance(LF.CurrentTowingVehicle.Position, PP.Position) <= 3.0F AndAlso Not Game.IsControlPressed(0, controllerModifierKey) Then
                             DisplayHelpTextThisFrame(String.Format(GetLangEntry("INM_FB_UNHOOK"), hookKey.GetButtonIcon, LF.CurrentTowingVehicle.FullName))
                             If Game.IsControlJustPressed(0, hookKey) Then
                                 Dim towVeh As Vehicle = LF.CurrentTowingVehicle
@@ -345,3 +366,6 @@ Public Class Flatbed
     End Sub
 
 End Class
+
+'1.5
+'- fixed lift/lower bed controls while in other vehicles

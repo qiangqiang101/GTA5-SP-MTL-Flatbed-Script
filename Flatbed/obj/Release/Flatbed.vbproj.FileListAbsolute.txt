@@ -18,7 +18,6 @@ E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\bin\Rel
 E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\bin\Release\ScriptHookVDotNet2.dll
 E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\bin\Release\Metadata.pdb
 E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\bin\Release\ScriptHookVDotNet2.xml
-E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\obj\Release\Flatbed.vbprojResolveAssemblyReference.cache
 E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\obj\Release\Flatbed.Resources.resources
 E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\obj\Release\Flatbed.vbproj.GenerateResource.Cache
 E:\Users\Bartholomew\Documents\GitHub\GTA5-SP-MTL-Flatbed-Script\Flatbed\obj\Release\Flatbed.dll

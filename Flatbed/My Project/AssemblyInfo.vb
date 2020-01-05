@@ -12,7 +12,7 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyDescription("")>
 <Assembly: AssemblyCompany("Zettabyte Technology")>
 <Assembly: AssemblyProduct("Flatbed Script")>
-<Assembly: AssemblyCopyright("Copyright © 2016-2019 Zettabyte Technology")>
+<Assembly: AssemblyCopyright("Copyright © 2016-2020 Zettabyte Technology")>
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: ComVisible(False)>
@@ -31,5 +31,5 @@ Imports System.Runtime.InteropServices
 ' by using the '*' as shown below:
 ' <Assembly: AssemblyVersion("1.0.*")> 
 
-<Assembly: AssemblyVersion("1.4.901.0")>
-<Assembly: AssemblyFileVersion("1.4.901.0")>
+<Assembly: AssemblyVersion("1.5.0106.1")>
+<Assembly: AssemblyFileVersion("1.5.0106.1")>

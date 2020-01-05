@@ -16,6 +16,9 @@ Module Helper
     Public hookKey As Control = Control.VehicleDuck
     Public liftKey As Control = Control.VehicleSubAscend
     Public lowerKey As Control = Control.VehicleSubDescend
+    Public controllerModifierKey As Control = Control.ScriptRB
+    Public controllerLiftBtn As Control = Control.ScriptPadUp
+    Public controllerLowerBtn As Control = Control.ScriptPadDown
     Public manualControl As Boolean = False
     Public fbVehs As New List(Of FlatbedVeh)
 
@@ -202,6 +205,9 @@ Module Helper
         hookKey = config.GetValue(Of Control)("CONTROL", "HOOKKEY", Control.VehicleDuck)
         liftKey = config.GetValue(Of Control)("CONTROL", "LIFTKEY", Control.VehicleSubAscend)
         lowerKey = config.GetValue(Of Control)("CONTROL", "LOWERKEY", Control.VehicleSubDescend)
+        controllerModifierKey = config.GetValue(Of Control)("JOYSTICK", "MODIFIER", Control.ScriptRB)
+        controllerLiftBtn = config.GetValue(Of Control)("JOYSTICK", "LIFTBTN", Control.ScriptPadUp)
+        controllerLowerBtn = config.GetValue(Of Control)("JOYSTICK", "LOWERBTN", Control.ScriptPadDown)
     End Sub
 
     Private Sub CreateConfig()
@@ -211,6 +217,9 @@ Module Helper
             config.SetValue(Of Control)("CONTROL", "HOOKKEY", Control.VehicleDuck)
             config.SetValue(Of Control)("CONTROL", "LIFTKEY", Control.VehicleSubAscend)
             config.SetValue(Of Control)("CONTROL", "LOWERKEY", Control.VehicleSubDescend)
+            config.SetValue(Of Control)("JOYSTICK", "MODIFIER", Control.ScriptRB)
+            config.SetValue(Of Control)("JOYSTICK", "LIFTBTN", Control.ScriptPadUp)
+            config.SetValue(Of Control)("JOYSTICK", "LOWERBTN", Control.ScriptPadDown)
             config.Save()
         End If
     End Sub
@@ -651,11 +660,10 @@ Module Helper
     <Extension>
     Public Sub DropBed(veh As Vehicle)
         If veh.IsAlive Then
-            'PP.PlayDropBedAnimation(veh)
             If Not veh.EngineRunning Then veh.EngineRunning = True
             veh.LeftIndicatorLightOn = True
             veh.RightIndicatorLightOn = True
-            Dim soundId As Integer = Audio.PlaySoundFromEntity(veh, "Garage_Open", "CAR_STEAL_2_SOUNDSET")
+            Dim soundId As Integer = Audio.PlaySoundAt(veh, "Garage_Open", "CAR_STEAL_2_SOUNDSET")
             Script.Wait(500)
             Dim closeFloat As Single = 0.03F
             Dim openFloat As Single = 0.26F
@@ -691,31 +699,8 @@ Module Helper
                 If veh.GetFloat(scoopDecor) <= closeFloat Then veh.CloseDoor(veh.FlatbedExtraDoor, False)
             End If
             Audio.StopSound(soundId)
-            'PP.StopDropBedAnimation
         End If
     End Sub
-
-    '<Extension>
-    'Public Function IsUsingScenario(ped As Ped, sc As String) As Boolean
-    '    Return Native.Function.Call(Of Boolean)(Hash.IS_PED_USING_SCENARIO, ped, sc)
-    'End Function
-
-    '<Extension>
-    'Public Sub StartScenarioInPlace(ped As Ped, sc As String)
-    '    Native.Function.Call(Hash.TASK_START_SCENARIO_IN_PLACE, ped, sc, 0, True)
-    'End Sub
-
-    '<Extension>
-    'Public Sub PlayDropBedAnimation(ped As Ped, veh As Vehicle)
-    '    If ped.Position.DistanceTo(veh.ControlDummyPos) <= 1.5F Or ped.Position.DistanceTo(veh.ControlDummy2Pos) <= 1.5F Then
-    '        If Not ped.IsUsingScenario("PROP_HUMAN_ATM") Then ped.StartScenarioInPlace("PROP_HUMAN_ATM")
-    '    End If
-    'End Sub
-
-    '<Extension>
-    'Public Sub StopDropBedAnimation(ped As Ped)
-    '    If ped.IsUsingScenario("PROP_HUMAN_ATM") Then ped.Task.ClearAll()
-    'End Sub
 
     <Extension>
     Public Sub DropBedManually(veh As Vehicle, isLift As Boolean)
